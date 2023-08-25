@@ -2,25 +2,26 @@
  * @NApiVersion 2.1
  * @NScriptType UserEventScript
  */
-define(['N/record'],
+define(['N/record', 'N/search'],
     /**
      * @param{record} record
+     * @param{search} search
      */
-    (record) => {
-        const afterSubmit = (scriptContext) => {
-            const allowedCompanies = [
-                "Activia Networks Canada Inc.",
-                "Stratacache Inc",
-                "Stratacache Limited",
-                "Scala Asia Pacific",
-                "Scala China Sales Corporation",
-                "Scala, Inc.",
-                "Scala BV",
-                "Scala Canada, Inc.",
-                "Scala KK",
-                "Scala Nordic AS"
-            ];
+    (record, search) => {
+        const allowedCompanies = [
+            "Activia Networks Canada Inc.",
+            "Stratacache Inc",
+            "Stratacache Limited",
+            "Scala Asia Pacific",
+            "Scala China Sales Corporation",
+            "Scala, Inc.",
+            "Scala BV",
+            "Scala Canada, Inc.",
+            "Scala KK",
+            "Scala Nordic AS"
+        ];
 
+        const afterSubmit = (scriptContext) => {
             log.debug("scriptContext: ", scriptContext.type);
             var recType = scriptContext.newRecord.type;
             if (recType == "invoice") {

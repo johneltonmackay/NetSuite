@@ -3,61 +3,12 @@
  *@NScriptType ClientScript
  */
 define(['N/error', 'N/search', 'N/record', 'N/currentRecord'], function (error, search, record, currentRecord) {
+
     function pageInit(context) {
         console.log('test');
         var currentRecord = context.currentRecord;
         var recordType = currentRecord.type;
         console.log('recordtype', recordType);
-        // if (recordType === 'salesorder'){
-        //     var lineNumber = currentRecord.findSublistLineWithValue({
-        //         sublistId: 'links',
-        //         fieldId: 'linkurl',
-        //         value: "/app/accounting/transactions/custinvc.nl?whence="
-        //     });
-        //     console.log('lineNumber', lineNumber);
-        //     let invoiceId = currentRecord.getSublistValue({
-        //         sublistId: 'links',
-        //         fieldId: 'id',
-        //         line: lineNumber
-        //     });
-        //
-        //     console.log('invoiceId', invoiceId);
-        //
-        //     let arrInvoiceData = [];
-        //     let objInvSearch = search.create({
-        //         type: 'invoice',
-        //         filters: [
-        //             ['type', 'anyof', 'CustInvc'],
-        //             'AND',
-        //             ['internalid', 'anyof', invoiceId],
-        //             'AND',
-        //             ['mainline', 'is', 'F'],
-        //             'AND',
-        //             ['custcoladm_rev_rec_end', 'isnotempty', ''],
-        //             'AND',
-        //             ['custcoladm_rev_rec_start', 'isnotempty', ''],
-        //         ],
-        //         columns: ['custcoladm_rev_rec_end', 'custcoladm_rev_rec_start'],
-        //     });
-        //     objInvSearch.run().each(function (result) {
-        //         arrInvoiceData.push({
-        //             'revstart': result.getValue('custcoladm_rev_rec_start'),
-        //             'revend': result.getValue('custcoladm_rev_rec_end'),
-        //         });
-        //         return true;
-        //     });
-        //     console.log('arrInvoiceData', arrInvoiceData);
-        //     const revStartDate = new Date(arrInvoiceData[0].revstart);
-        //     const revEndDate = new Date(arrInvoiceData[0].revend);
-        //     currentRecord.setValue({
-        //         fieldId: 'startdate',
-        //         value: revStartDate
-        //     });
-        //     currentRecord.setValue({
-        //         fieldId: 'enddate',
-        //         value: revEndDate
-        //     });
-        // } else {
         if (context.mode === 'create') {
             var today = new Date();
 
@@ -70,7 +21,6 @@ define(['N/error', 'N/search', 'N/record', 'N/currentRecord'], function (error, 
                 value: today
             });
         }
-        // }
     }
 
     function validateLine(context) {
