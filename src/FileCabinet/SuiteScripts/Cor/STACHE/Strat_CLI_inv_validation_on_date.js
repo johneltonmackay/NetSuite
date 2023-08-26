@@ -19,6 +19,87 @@ define(['N/currentRecord', 'N/record', 'N/format', 'N/ui/dialog', 'N/search'],
         ];
         function pageInit(scriptContext) {
             console.log("pageInit: TEST")
+            var currentRecord = scriptContext.currentRecord;
+            let transType = currentRecord.getValue({
+                fieldId: 'transform'
+            });
+            console.log("pageInit: transType", transType)
+            if (transType == 'salesord'){
+                let srtTranDate = currentRecord.getText({
+                    fieldId: 'trandate'
+                });
+                let strSubsidId = currentRecord.getText({
+                    fieldId: 'subsidiary'
+                });
+                console.log("pageInit: srtTranDate", srtTranDate)
+                if (allowedCompanies.includes(strSubsidId)) {
+                    var dtTranDate = new Date(srtTranDate);
+                    let numLines = currentRecord.getLineCount({
+                        sublistId: 'item'
+                    });
+                    console.log("pageInit: numLines", numLines)
+                    for (var x = 0; x < numLines; x++) {
+                        console.log("pageInit: x", x)
+                        currentRecord.selectLine({
+                            sublistId: 'item',
+                            line: x
+                        });
+                        let itemId = currentRecord.getCurrentSublistValue({
+                            sublistId: 'item',
+                            fieldId: 'item',
+                        });
+                        console.log("pageInit: itemId", itemId)
+                        if (itemId > 0){
+                            var revRuleSearch = search.lookupFields({
+                                type: search.Type.ITEM,
+                                id: itemId,
+                                columns: ['revenuerecognitionrule']
+                            })
+                            console.log("revRuleSearch: ", revRuleSearch);
+                            if (revRuleSearch != null){
+                                var revResults = revRuleSearch.revenuerecognitionrule;
+                                if (revResults != null || revResults != "" || revResults != undefined) {
+                                    var indxLine = revResults[0];
+                                    if (indxLine != null) {
+                                        var revRuleId = revRuleSearch.revenuerecognitionrule[0].value
+                                        console.log("revRuleId: ", revRuleId);
+                                        if (revRuleId == '13' || revRuleId == '19'){
+                                            currentRecord.setCurrentSublistValue({
+                                                sublistId: 'item',
+                                                fieldId: 'custcoladm_rev_rec_start',
+                                                value: dtTranDate,
+
+                                            });
+                                            currentRecord.setCurrentSublistValue({
+                                                sublistId: 'item',
+                                                fieldId: 'custcoladm_rev_rec_end',
+                                                value: dtTranDate,
+                                            });
+                                        } else {
+                                            currentRecord.setCurrentSublistValue({
+                                                sublistId: 'item',
+                                                fieldId: 'custcoladm_rev_rec_start',
+                                                value: '',
+                                            });
+                                            currentRecord.setCurrentSublistValue({
+                                                sublistId: 'item',
+                                                fieldId: 'custcoladm_rev_rec_end',
+                                                value: '',
+                                            });
+                                        }
+
+                                    }
+                                }
+                            }
+                            currentRecord.commitLine({
+                                sublistId: 'item'
+                            });
+                        }
+                    }
+                }
+
+            }
+
         }
 
         function fieldChanged(scriptContext) {
@@ -55,6 +136,81 @@ define(['N/currentRecord', 'N/record', 'N/format', 'N/ui/dialog', 'N/search'],
                     }
                 }
             }
+            if (strFieldChanging === 'trandate') {
+                let srtTranDate = currentRecord.getText({
+                    fieldId: 'trandate'
+                });
+                let strSubsidId = currentRecord.getText({
+                    fieldId: 'subsidiary'
+                });
+                if (allowedCompanies.includes(strSubsidId)) {
+                    var dtTranDate = new Date(srtTranDate);
+                    let numLines = currentRecord.getLineCount({
+                        sublistId: 'item'
+                    });
+                    console.log("pageInit: numLines", numLines)
+                    for (var x = 0; x < numLines; x++) {
+                        console.log("pageInit: x", x)
+                        currentRecord.selectLine({
+                            sublistId: 'item',
+                            line: x
+                        });
+                        let itemId = currentRecord.getCurrentSublistValue({
+                            sublistId: 'item',
+                            fieldId: 'item',
+                        });
+                        console.log("pageInit: itemId", itemId)
+                        if (itemId > 0){
+                            var revRuleSearch = search.lookupFields({
+                                type: search.Type.ITEM,
+                                id: itemId,
+                                columns: ['revenuerecognitionrule']
+                            })
+                            console.log("revRuleSearch: ", revRuleSearch);
+                            if (revRuleSearch != null){
+                                var revResults = revRuleSearch.revenuerecognitionrule;
+                                if (revResults != null || revResults != "" || revResults != undefined) {
+                                    var indxLine = revResults[0];
+                                    if (indxLine != null) {
+                                        var revRuleId = revRuleSearch.revenuerecognitionrule[0].value
+                                        console.log("revRuleId: ", revRuleId);
+                                        if (revRuleId == '13' || revRuleId == '19'){
+                                            currentRecord.setCurrentSublistValue({
+                                                sublistId: 'item',
+                                                fieldId: 'custcoladm_rev_rec_start',
+                                                value: dtTranDate,
+
+                                            });
+                                            currentRecord.setCurrentSublistValue({
+                                                sublistId: 'item',
+                                                fieldId: 'custcoladm_rev_rec_end',
+                                                value: dtTranDate,
+                                            });
+                                        } else {
+                                            currentRecord.setCurrentSublistValue({
+                                                sublistId: 'item',
+                                                fieldId: 'custcoladm_rev_rec_start',
+                                                value: '',
+                                            });
+                                            currentRecord.setCurrentSublistValue({
+                                                sublistId: 'item',
+                                                fieldId: 'custcoladm_rev_rec_end',
+                                                value: '',
+                                            });
+                                        }
+
+                                    }
+                                }
+                            }
+                            currentRecord.commitLine({
+                                sublistId: 'item'
+                            });
+                        }
+                    }
+                }
+            }
+
+
             if (sublistName === 'item' && strFieldChanging === 'item'){
                 let srtTranDate = currentRecord.getText({
                     fieldId: 'trandate'
@@ -68,45 +224,49 @@ define(['N/currentRecord', 'N/record', 'N/format', 'N/ui/dialog', 'N/search'],
                         sublistId: 'item',
                         fieldId: 'item',
                     });
-                    var revRuleSearch = search.lookupFields({
-                        type: search.Type.ITEM,
-                        id: itemId,
-                        columns: ['revenuerecognitionrule']
-                    })
-                    console.log("revRuleSearch: ", revRuleSearch);
-                    if (revRuleSearch != null){
-                        var revResults = revRuleSearch.revenuerecognitionrule;
-                        if (revResults != null || revResults != "" || revResults != undefined) {
-                            var indxLine = revResults[0];
-                            if (indxLine != null) {
-                                var revRuleId = revRuleSearch.revenuerecognitionrule[0].value
-                                console.log("revRuleId: ", revRuleId);
-                                if (revRuleId == '13' || revRuleId == '19'){
-                                    currentRecord.setCurrentSublistValue({
-                                        sublistId: 'item',
-                                        fieldId: 'custcoladm_rev_rec_start',
-                                        value: dtTranDate
-                                    });
-                                    currentRecord.setCurrentSublistValue({
-                                        sublistId: sublistName,
-                                        fieldId: 'custcoladm_rev_rec_end',
-                                        value: dtTranDate
-                                    });
-                                } else {
-                                    currentRecord.setCurrentSublistValue({
-                                        sublistId: 'item',
-                                        fieldId: 'custcoladm_rev_rec_start',
-                                        value: ''
-                                    });
-                                    currentRecord.setCurrentSublistValue({
-                                        sublistId: sublistName,
-                                        fieldId: 'custcoladm_rev_rec_end',
-                                        value: ''
-                                    });
+                    if (itemId > 0){
+                        var revRuleSearch = search.lookupFields({
+                            type: search.Type.ITEM,
+                            id: itemId,
+                            columns: ['revenuerecognitionrule']
+                        })
+                        console.log("revRuleSearch: ", revRuleSearch);
+
+                        if (revRuleSearch != null){
+                            var revResults = revRuleSearch.revenuerecognitionrule;
+                            if (revResults != null || revResults != "" || revResults != undefined) {
+                                var indxLine = revResults[0];
+                                if (indxLine != null) {
+                                    var revRuleId = revRuleSearch.revenuerecognitionrule[0].value
+                                    console.log("revRuleId: ", revRuleId);
+                                    if (revRuleId == '13' || revRuleId == '19'){
+                                        currentRecord.setCurrentSublistValue({
+                                            sublistId: 'item',
+                                            fieldId: 'custcoladm_rev_rec_start',
+                                            value: dtTranDate
+                                        });
+                                        currentRecord.setCurrentSublistValue({
+                                            sublistId: sublistName,
+                                            fieldId: 'custcoladm_rev_rec_end',
+                                            value: dtTranDate
+                                        });
+                                    } else {
+                                        currentRecord.setCurrentSublistValue({
+                                            sublistId: 'item',
+                                            fieldId: 'custcoladm_rev_rec_start',
+                                            value: ''
+                                        });
+                                        currentRecord.setCurrentSublistValue({
+                                            sublistId: sublistName,
+                                            fieldId: 'custcoladm_rev_rec_end',
+                                            value: ''
+                                        });
+                                    }
                                 }
                             }
                         }
                     }
+
                 }
             }
         }

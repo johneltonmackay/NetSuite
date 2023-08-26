@@ -14,13 +14,11 @@ define(['N/record', 'N/search'],
                 let objRevPlanSearch = search.create({
                     type: 'revenueplan',
                     filters: [
-                        ['revenueelement.subsidiary', 'anyof', '2'],
+                        ['revenueelement.subsidiary', 'anyof', '26', '24', '14', '16', '19'],
                         'AND',
-                        ['plannedperiod', 'anyof', '54', '55'],
+                        ['plannedperiod', 'anyof', '24', '58', '29', '63', '34', '68', '21', '55', '20', '54', '28', '62', '26', '60', '22', '56', '25', '59', '33', '67', '32', '66', '30', '64'],
                         'AND',
                         ['isrecognized', 'is', 'F'],
-                        // 'AND',
-                        // ['plannedperiod', 'anyof', '24', '58', '29', '63', '34', '68', '21', '55', '20', '54', '28', '62', '26', '60', '22', '56', '25', '59', '33', '67', '32', '66', '30', '64'],
                     ],
                     columns: [
                         search.createColumn({name: 'internalid'}),
@@ -77,7 +75,7 @@ define(['N/record', 'N/search'],
                             fieldId: 'plannedperiod',
                         });
 
-                        if (strPlanPeriod.includes("Jan 2019") || strPlanPeriod.includes("Feb 2019")){
+                        if (strPlanPeriod.includes("2018") || strPlanPeriod.includes("2019")){
                             log.debug('strPlanPeriod', strPlanPeriod)
                             objRecRevPlan.setCurrentSublistValue({
                                 sublistId: 'plannedrevenue',
