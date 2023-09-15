@@ -111,7 +111,7 @@ define(['N/record', 'N/search', 'N/runtime', 'N/currentRecord'],
                             });
                             console.log('lineNumber', lineNumber)
 
-                            currRecord.selectLine({
+                            currRecord.insertLine({
                                 sublistId: 'apply',
                                 line: lineNumber
                             });

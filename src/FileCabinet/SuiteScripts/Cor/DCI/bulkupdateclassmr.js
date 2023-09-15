@@ -27,7 +27,7 @@ define(['N/record', 'N/search'],
                     ],
                     columns: [
                         search.createColumn({name: 'internalid'}),
-                        search.createColumn({ name: 'type' }),
+                        search.createColumn({ name: 'type', join: 'salesorder' }),
                     ],
 
                 });

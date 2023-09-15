@@ -91,6 +91,7 @@ define(['N/record', 'N/search'],
         }
 
         function getClassIF(createdFromId, ordLine, x) {
+            var intClassValue
             var searchTransType = search.lookupFields({
                 type: search.Type.TRANSACTION,
                 id: createdFromId,
@@ -107,32 +108,36 @@ define(['N/record', 'N/search'],
                 transactionType = 'transferorder';
             }
 
-            var searchTransaction = search.create({
-                type: transactionType,
-                filters: [
-                    ['internalid', 'anyof', createdFromId],
-                    'AND',
-                    ['line', 'equalto', ordLine]
-                ],
-                columns: ['amount', 'custcol_cc_shippingcharge']
-            });
-
-            var searchResults = searchTransaction.run().getRange({start: 0, end: 1});
-
-            var intAmount = searchResults[0].getValue({name: 'amount'});
-            var intShipRate = searchResults[0].getValue({name: 'custcol_cc_shippingcharge'});
-            log.debug("getClassIF intAmount", intAmount)
-            log.debug("getClassIF intShipRate", intShipRate)
-            var intClassValue
-            if (intAmount > 0) {
-                if (intShipRate || !intShipRate) {
-                    intClassValue = 3 // PAID
-                }
+            if (transactionType === 'transferorder'){
+                intClassValue = 4 //NA
             } else {
-                if (intShipRate > 0) {
-                    intClassValue = 2 // FREE
+                var searchTransaction = search.create({
+                    type: transactionType,
+                    filters: [
+                        ['internalid', 'anyof', createdFromId],
+                        'AND',
+                        ['line', 'equalto', ordLine]
+                    ],
+                    columns: ['amount', 'custcol_cc_shippingcharge']
+                });
+
+                var searchResults = searchTransaction.run().getRange({start: 0, end: 1});
+
+                var intAmount = searchResults[0].getValue({name: 'amount'});
+                var intShipRate = searchResults[0].getValue({name: 'custcol_cc_shippingcharge'});
+                log.debug("getClassIF intAmount", intAmount)
+                log.debug("getClassIF intShipRate", intShipRate)
+
+                if (intAmount > 0) {
+                    if (intShipRate || !intShipRate) {
+                        intClassValue = 3 // PAID
+                    }
                 } else {
-                    intClassValue = 1 // COMP
+                    if (intShipRate > 0) {
+                        intClassValue = 2 // FREE
+                    } else {
+                        intClassValue = 1 // COMP
+                    }
                 }
             }
             log.debug("intClassValue for Line getClassIF" + x, intClassValue);

@@ -3,112 +3,236 @@
  * @NScriptType ClientScript
  * @NModuleScope SameAccount
  */
-define(['N/record'],
-
-  /**
-   * @param{record} record
-   */
-  function(record) {
-    
-    function pageInit(scriptContext) {
-      var objCurrentRecord = scriptContext.currentRecord;
-      var intCategory = objCurrentRecord.getValue({
-        fieldId: 'category'
-      });
-      console.log("pageInit: category: ", intCategory);
-      updateEntityUseCode(objCurrentRecord, intCategory !== '6' ? 13 : "", true);
-      updateFinancial(objCurrentRecord);
-    }
-
-    function fieldChanged(scriptContext) {
-      var objCurrentRecord = scriptContext.currentRecord;
-      var strFieldChanging = scriptContext.fieldId;
-      if (strFieldChanging === 'category') {
-        var intCategory = objCurrentRecord.getValue({
-          fieldId: 'category'
-        });
-        console.log("fieldChanged: category: ", intCategory);
-        updateEntityUseCode(objCurrentRecord, intCategory !== '6' ? 13 : "", false);
-      }
-    }
-
-    function validateField(scriptContext){
-      var objCurrentRecord = scriptContext.currentRecord;
-      var strFieldChanging = scriptContext.fieldId;
-      if (strFieldChanging === 'custpage_ava_entityusecode'){
-        updateFinancial(objCurrentRecord);
-      }
-      return true
-    }
-
-    //PRIVATE FUNCTION
-
-    function updateEntityUseCode(objCurrentRecord, value, isPageInit) {
-
-      var numLines = objCurrentRecord.getLineCount({
-        sublistId: 'addressbook'
-      });
-      if (numLines) {
-        console.log("numLines: ", numLines);
-        for (var i = 0; i < numLines; i++) {
-          console.log("i: ", i);
-          objCurrentRecord.selectLine({
-            sublistId: 'addressbook',
-            line: i
-          });
-
-          let entityUseCode = objCurrentRecord.getCurrentSublistValue({
-            sublistId: 'addressbook',
-            fieldId: 'custpage_ava_entityusecode',
-          });
-          console.log("entityUseCode: ", entityUseCode);
-          
-          if (isPageInit && !entityUseCode || !isPageInit) {
-            objCurrentRecord.setCurrentSublistValue({
-              sublistId: 'addressbook',
-              fieldId: 'custpage_ava_entityusecode',
-              value: value,
-              forceSyncSourcing: true,
-            });
-          }
-
-          objCurrentRecord.commitLine({
-            sublistId: 'addressbook'
-          });
+define(['N/record', 'N/search', 'N/currentRecord'],
+    /**
+     * @param{record} record
+     * @param{search} search
+     * @param{currentRecord} currentRecord
+     */
+    function(record, search, currentRecord) {
+        const CAT_COMPANY = '6'
+        const AVATAX = '1295'
+        const NO_REPORT = '1293'
+        const FIELD = {
+            TAXABLE: 'taxable',
+            AVA_CERTIFICATE: 'custpage_ava_exemption',
+            CATEGORY: 'category',
+            TAX_ITEM: 'taxitem',
+            SUBLIST_ADDRESS: 'addressbook',
+            ADDRESS: 'addressbookaddress_text',
+            ENTITY_CODE: 'custpage_ava_entityusecode',
+            DEFAULT_SHIPPING: 'defaultshipping'
         }
 
-        updateFinancial(objCurrentRecord)
-      }
-    }
+        function pageInit(scriptContext) {
+            console.log('pageInit: Auto populate Tax and Entity Code');
+        }
 
-    function updateFinancial(objCurrentRecord){
+        function fieldChanged(scriptContext) {
+            try {
+                var currentRecord = scriptContext.currentRecord;
+                var strFieldChanging = scriptContext.fieldId;
+                console.log('strFieldChanging', strFieldChanging);
+                let blnInput = currentRecord.getValue({
+                    fieldId: 'custentity_bln_accept_input',
+                });
+                console.log('blnInput', blnInput);
+                if (!blnInput){
+                    if (strFieldChanging === FIELD.CATEGORY) {
+                        updateTax(currentRecord);
+                        updateEntityUseCode(currentRecord);
+                    }
+                    if (strFieldChanging === FIELD.AVA_CERTIFICATE) {
+                        updateTax(currentRecord);
+                        updateEntityUseCode(currentRecord);
+                    }
+                    if (strFieldChanging === FIELD.ADDRESS){
+                        updateTax(currentRecord);
+                        updateEntityCodeField(currentRecord);
+                    }
+                    if (strFieldChanging === FIELD.DEFAULT_SHIPPING) {
+                        let defaultShipping = currentRecord.getCurrentSublistValue({
+                            sublistId: 'addressbook',
+                            fieldId: FIELD.DEFAULT_SHIPPING,
+                        });
+                        if (defaultShipping){
+                            console.log("defaultShipping", defaultShipping)
+                            updateTax(currentRecord);
+                            updateEntityUseCode(currentRecord);
+                        }
+                    }
+                    if (strFieldChanging === FIELD.ENTITY_CODE){
+                        updateEntityCodeField(currentRecord);
+                    }
+                }
+            } catch (err) {
+                console.log('ERROR fieldChanged', err)
+            }
+        }
 
-      objCurrentRecord.selectLine({
-        sublistId: 'addressbook',
-        line: 0
-      });
+        function updateEntityUseCode(currentRecord) {
+            var strCertificate = currentRecord.getValue({
+                fieldId: FIELD.AVA_CERTIFICATE
+            });
+            var numLines = currentRecord.getLineCount({
+                sublistId: 'addressbook'
+            });
+            if (numLines > 0) {
+                console.log("numLines: ", numLines);
+                for (var x = 0; x < numLines; x++) {
+                    console.log("x: ", x);
+                    currentRecord.selectLine({
+                        sublistId: 'addressbook',
+                        line: x
+                    });
 
-      let entityUseCode = objCurrentRecord.getCurrentSublistValue({
-        sublistId: 'addressbook',
-        fieldId: 'custpage_ava_entityusecode',
-        line: 0
-      });
+                    let strAddrbook = currentRecord.getCurrentSublistValue({
+                        sublistId: 'addressbook',
+                        fieldId: 'addressbookaddress_text',
+                    });
 
-     
-      objCurrentRecord.setValue({
-        fieldId: 'custentity_useentitycodes',
-        value: entityUseCode
-      });
+                    console.log("strAddrbook", strAddrbook)
 
+                    var bolState = getState(strAddrbook)
 
-      console.log("updateFinancial", entityUseCode)
+                    if (bolState){
+                        currentRecord.setCurrentSublistValue({
+                            sublistId: 'addressbook',
+                            fieldId: 'custpage_ava_entityusecode',
+                            value: 18, // TAXABLE
+                        });
+                    } else {
+                        currentRecord.setCurrentSublistValue({
+                            sublistId: 'addressbook',
+                            fieldId: 'custpage_ava_entityusecode',
+                            value: 13, // M
+                        });
+                    }
 
-    }
+                    currentRecord.commitLine({
+                        sublistId: 'addressbook'
+                    });
+                    updateEntityCodeField(currentRecord)
+                }
+            }
+        }
 
-    return {
-      pageInit: pageInit,
-      fieldChanged: fieldChanged,
-      validateField: validateField
-    };
+        function updateEntityCodeField(currentRecord){
 
-  });
+            let defaultShipping = currentRecord.getCurrentSublistValue({
+                sublistId: 'addressbook',
+                fieldId: FIELD.DEFAULT_SHIPPING,
+            });
+            if (defaultShipping){
+                let entityUseCode = currentRecord.getCurrentSublistValue({
+                    sublistId: 'addressbook',
+                    fieldId: 'custpage_ava_entityusecode',
+                });
+                currentRecord.setValue({
+                    fieldId: 'custentity_useentitycodes',
+                    value: entityUseCode
+                });
+                console.log("updateEntityCodeField", entityUseCode)
+            }
+        }
+
+        function updateTax(currentRecord) {
+            let defaultShipping = currentRecord.getCurrentSublistValue({
+                sublistId: 'addressbook',
+                fieldId: FIELD.DEFAULT_SHIPPING,
+            });
+            if (defaultShipping){
+                var strCertificate = currentRecord.getValue({
+                    fieldId: FIELD.AVA_CERTIFICATE
+                });
+                var strCategory = currentRecord.getValue({
+                    fieldId: FIELD.CATEGORY
+                });
+                let strAddrbook = currentRecord.getCurrentSublistValue({
+                    sublistId: 'addressbook',
+                    fieldId: 'addressbookaddress_text',
+                });
+                var bolState = getState(strAddrbook)
+                console.log("updateFinancialTab: strCertificate: ", strCertificate);
+                console.log("updateFinancialTab: strCategory: ", strCategory);
+                console.log("updateFinancialTab: bolState: ", bolState);
+                if (bolState) {
+                    var blnTaxValue = false
+                    var intEntityCode = ""
+                    if (strCertificate) {
+                        blnTaxValue = false
+                        intEntityCode = 18 // TAXABLE
+                    } else {
+                        blnTaxValue = true
+                        intEntityCode = 18 // TAXABLE
+
+                    }
+                    currentRecord.setCurrentSublistValue({
+                        sublistId: 'addressbook',
+                        fieldId: FIELD.ENTITY_CODE,
+                        value: intEntityCode,
+                    });
+                    currentRecord.setValue({
+                        fieldId: FIELD.TAXABLE,
+                        value: blnTaxValue,
+                    });
+                    currentRecord.setValue({
+                        fieldId: FIELD.TAX_ITEM,
+                        value: AVATAX,
+                    });
+                } else {
+                    currentRecord.setValue({
+                        fieldId: FIELD.TAXABLE,
+                        value: false,
+                    });
+                    currentRecord.setValue({
+                        fieldId: FIELD.TAX_ITEM,
+                        value: AVATAX,
+                    });
+                    currentRecord.setCurrentSublistValue({
+                        sublistId: 'addressbook',
+                        fieldId: FIELD.ENTITY_CODE,
+                        value: 13 // M
+                    });
+                }
+
+                if (strCategory === CAT_COMPANY) {
+                    currentRecord.setValue({
+                        fieldId: FIELD.TAXABLE,
+                        value: false,
+                    });
+                    currentRecord.setValue({
+                        fieldId: FIELD.TAX_ITEM,
+                        value: NO_REPORT,
+                    });
+                    currentRecord.setCurrentSublistValue({
+                        sublistId: 'addressbook',
+                        fieldId: FIELD.ENTITY_CODE,
+                        value: 13 // M
+                    });
+                }
+            }
+        }
+
+        function getState(strAddrbook) {
+            var blnState = false
+            if (strAddrbook){
+                const arrAddress = strAddrbook.split(',');
+                var rawState = arrAddress[1];
+                console.log("rawState", rawState);
+                if (rawState.includes("NC") || rawState.includes("WA") || rawState.includes("CA")) {
+                    blnState = true
+                } else {
+                    blnState = false
+                }
+            }
+            console.log("getState", blnState);
+            return blnState
+        }
+
+        return {
+            pageInit: pageInit,
+            fieldChanged: fieldChanged,
+        };
+
+    });

@@ -79,6 +79,90 @@ define(['N/record', 'N/search', 'N/runtime', 'N/currentRecord'],
          */
         function fieldChanged(scriptContext) {
             console.log("fieldChanged", "TEST")
+            var objRecord = record.load({
+                type: strRecType,
+                id: strId,
+                isDynamic: true,
+            });
+            var fldSearch = search.lookupFields({
+                type: search.Type.ITEM,
+                id: 'test',
+                columns: ['test']
+            });
+
+            if (fldSearch && fldSearch.test && fldSearch.test.length > 0) {
+                var fldId = fldSearch.test[0].value;
+            }
+            let arrTransaction = [];
+            try {
+                let objTransactionSearch = search.create({
+                    type: 'transaction',
+                    filters: [
+                        ['type', 'anyof', 'SalesOrd'],
+                        'AND',
+                        ['mainline', 'is', 'T'],
+                        'AND',
+                        ['internalid', 'anyof', 'test'],
+                    ],
+                    columns: [
+                        search.createColumn({name: 'internalid'}),
+                    ],
+                });
+                var srcResCount = objTranSrc.runPaged().count;
+                if (srcResCount != 0) {
+                    var pagedData = objTranSrc.runPaged({pageSize: 1000});
+                    for (var i = 0; i < pagedData.pageRanges.length; i++) {
+                        var currentPage = pagedData.fetch(i);
+                        var pageData = currentPage.data;
+                        if (pageData.length > 0) {
+
+                            arrTrans.push({
+                                transId: pageData[pageResultIndex].getValue({name: 'internalid'}),
+                            });
+                        }
+                    }
+
+                }
+            } catch (err) {
+                log.error('srcRec', err);
+            }
+            log.debug("test: arrTrans", arrTrans)
+            let transType = currentRecord.getValue({
+                fieldId: 'transform'
+            });
+            objSoData.setValue({
+                fieldId: 'altshippingcost',
+                value: 0,
+                ignoreFieldChange: true
+            });
+            let numLines = currentRecord.getLineCount({
+                sublistId: 'item'
+            });
+            currentRecord.selectLine({
+                sublistId: '',
+                line: x
+            });
+            currentRecord.setCurrentSublistValue({
+                sublistId: '',
+                fieldId: '',
+                value: 'test'
+            });
+            currentRecord.commitLine({
+                sublistId: ''
+            });
+            let itemId = currentRecord.getCurrentSublistValue({
+                sublistId: 'item',
+                fieldId: 'item',
+            });
+            function updateClass(strRecType, strId) {
+
+            }
+            for (var x = 0; x < numLines; x++) {
+
+            }
+            console.log("itemType", itemType)
+            log.debug("numLines", numLines)
+
 
         }
 
